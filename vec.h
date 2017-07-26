@@ -76,19 +76,19 @@ inline bool refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& refrac
 
 inline vec3 linear_to_gamma(const vec3& v, float gammaFactor)
 {
-	return vec3(
-		powf(v.getX(), gammaFactor),
-		powf(v.getY(), gammaFactor),
-		powf(v.getZ(), gammaFactor));
-}
-
-inline vec3 gamma_to_linear(const vec3& v, float gammaFactor)
-{
 	float recipGammaFactor = recip(gammaFactor);
 	return vec3(
 		powf(v.getX(), recipGammaFactor),
 		powf(v.getY(), recipGammaFactor),
 		powf(v.getZ(), recipGammaFactor));
+}
+
+inline vec3 gamma_to_linear(const vec3& v, float gammaFactor)
+{
+	return vec3(
+		powf(v.getX(), gammaFactor),
+		powf(v.getY(), gammaFactor),
+		powf(v.getZ(), gammaFactor));
 }
 
 inline vec3 de_nan(const vec3& c)
