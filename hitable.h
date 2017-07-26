@@ -74,6 +74,40 @@ private:
 	hitable* m_hitable;
 };
 
+class texcoord : public hitable {
+public:
+	texcoord(hitable* p, bool rev_u, bool rev_v, float su, float sv) : m_hitable(p), m_rev_u(rev_u), m_rev_v(rev_v), m_su(su), m_sv(sv) {}
+
+	virtual bool hit(const ray& r, float tmin, float tmax, hit_record& hrec) const override {
+		if (m_hitable->hit(r, tmin, tmax, hrec)) {
+			if (m_rev_u) hrec.u = 1.0 - hrec.u;
+			hrec.u *= m_su;
+			if (m_rev_v) hrec.v = 1.0 - hrec.v;
+			hrec.v *= m_sv;
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	virtual bool bounds(float t0, float t1, aabb& box) const override {
+		return m_hitable->bounds(t0, t1, box);
+	}
+
+	virtual float pdf_value(const vec3& o, const vec3& v) const {
+		return m_hitable->pdf_value(o, v);
+	}
+
+	virtual vec3 random(const vec3& o) const {
+		return m_hitable->random(o);
+	}
+
+private:
+	hitable* m_hitable;
+	bool m_rev_u, m_rev_v;
+	float m_su, m_sv;
+};
+
 class translate : public hitable {
 public:
 	translate(hitable* p, const vec3& displacement) : m_hitable(p), m_offset(displacement) {}
