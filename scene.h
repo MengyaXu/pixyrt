@@ -43,6 +43,49 @@ hitable* random_scene()
 	return new bvh_node(list, i, 0.0, 1.0);
 }
 
+hitable* refract_sphere()
+{
+	hitable** list = new hitable*[8];
+	int i = 0;
+	material* red = new lambertian(new constant_texture(vec3(0.65, 0.05, 0.05)+vec3(0.5)));
+	material* yellow = new lambertian(new constant_texture(vec3(1.0, 1.0, 0.0)));
+	material* blue = new lambertian(new constant_texture(vec3(0.0, 0.5f, 1.0)));
+	//material* white = new lambertian(new constant_texture(vec3(0.73)));
+	//material* white = new lambertian(new noise_texture(0.1));
+	//material* white = new lambertian(new constant_texture(vec3(0.73)));
+	material* white = new lambertian(new constant_texture(vec3(1.3)));
+	material* checker = new lambertian(load_texture("assets/uvchecker.bmp"));
+	material* green = new lambertian(new constant_texture(vec3(0.12, 0.45, 0.15)+vec3(0.5)));
+	//material* light = new diffuse_light(new constant_texture(vec3(15)));
+	list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
+	list[i++] = new yz_rect(0, 555, 0, 555, 0, red);
+	//list[i++] = new flip_normals(new xz_rect(213, 343, 227, 332, 554, light));
+	//list[i++] = new flip_normals(new xz_rect(213+50, 343-50, 227+50, 332-50, 554, ));
+	list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
+	list[i++] = new xz_rect(0, 555, 0, 555, 0, white);
+	list[i++] = new texcoord(
+		new flip_normals(
+			new xy_rect(0, 555, 0, 555, 555, checker)
+		),
+		true, false, 1, 1);
+	//list[i++] = new translate(
+	//	new rotate_y(
+	//		new box(vec3(0), vec3(165), white),
+	//		-18),
+	//	vec3(130,0,65));
+	//material* aluminum = new metal(vec3(0.8,0.85,0.88), 0);
+	//list[i++] = new translate(
+	//	new rotate_y(
+	//		new box(vec3(0), vec3(165,330,165), aluminum),
+	//		15),
+	//	vec3(265,0,295));
+
+	list[i++] = new sphere(vec3(555/2, 555/2, 555/2), 100, new dielectric(2.417));
+	list[i++] = new sphere(vec3(0, 0, 0), 10000, new sky_light());
+
+	return new hitable_list(list, i);
+}
+
 hitable* two_spheres() {
 	texture* checker = new checker_texture(
 		new constant_texture(vec3(0.2, 0.3, 0.1)),

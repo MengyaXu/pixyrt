@@ -43,8 +43,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_image_write.h"
-#include "scene.h"
-#include "shade.h"
 
 #define OUTPUT "render.bmp"
 #define THREAD_NUM (8)
@@ -271,10 +269,10 @@ void render(Image& image, Scene& scene, Workarea& warea, float metallic, float r
 void render(Image& image, Scene& scene, Workarea& warea, float metallic, float roughness, int type, int row)
 {
 #pragma omp parallel for schedule(dynamic, 1) num_threads(THREAD_NUM)
-	//for (int i = 0; i <= 11; i++) {
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i <= 11; i++) {
+	//for (int i = 0; i < 5; i++) {
 		float theta = radians(45);
-		float phi = radians(i*20);
+		float phi = radians(i*30);
 		//float phi = (i * 30 / 180.0f*PI);
 		//float phi = (2 * 30 / 180.0f*PI);
 		Quat rotY = Quat::rotationY(phi);
@@ -284,8 +282,8 @@ void render(Image& image, Scene& scene, Workarea& warea, float metallic, float r
 		Workarea localArea = warea;
 		localScene.setLight(rotate(rotZ*rotY, Vector3::zAxis()));
 		localArea.setOutPos(i*scene.getWidth(), row*scene.getHeight());
-		//render(image, localScene, localArea, metallic, static_cast<float>(i)/11.0f, type);
-		render(image, localScene, localArea, metallic, roughness, type);
+		render(image, localScene, localArea, metallic, static_cast<float>(i)/11.0f, type);
+		//render(image, localScene, localArea, metallic, roughness, type);
 	}
 }
 
@@ -296,7 +294,7 @@ texture* load_texture(const char* name)
 	return new image_texture(texels, nx, ny);
 }
 
-void plot()
+void plot_diffuse_reflectance() 
 {
 	std::ofstream ostrm("plot.csv");
 	ostrm << "Roughness,ViewAngle,Reflectance" << std::endl;
@@ -331,6 +329,28 @@ void plot()
 	}
 }
 
+void plot_random_cosine_direction() 
+{
+	onb uvw;
+	uvw.build_from_w(vec3(0, 1, 0));
+
+	std::ofstream ostrm("plot.csv");
+	ostrm << "X,Y,X" << std::endl;
+	int N = 100;
+	for (int i = 0; i < 100; i++) 
+	{
+		//vec3 v = random_cosine_direction();
+		vec3 v = uvw.local(random_cosine_direction());
+		ostrm << v.getX() << "," << v.getY() << "," << v.getZ() << std::endl;
+	}
+}
+
+void plot()
+{
+	//plot_diffuse_reflectance();
+	plot_random_cosine_direction();
+}
+
 #define SCENE_WIDTH  128
 #define SCENE_HEIGHT 128
 
@@ -357,13 +377,13 @@ void render_scene()
 	//	new constant_texture(vec3(0.9)));
 	//ball.albedo = load_texture("assets/brick_diffuse.jpg");
 	//ball.roughness = load_texture("assets/brick_roughness.jpg");
-	//ball.envmap = new cube_texture(
-	//	load_texture("assets/px.bmp"),
-	//	load_texture("assets/nx.bmp"),
-	//	load_texture("assets/py.bmp"),
-	//	load_texture("assets/ny.bmp"),
-	//	load_texture("assets/pz.bmp"),
-	//	load_texture("assets/nz.bmp"));
+	ball.envmap = new cube_texture(
+		load_texture("assets/px.bmp"),
+		load_texture("assets/nx.bmp"),
+		load_texture("assets/py.bmp"),
+		load_texture("assets/ny.bmp"),
+		load_texture("assets/pz.bmp"),
+		load_texture("assets/nz.bmp"));
 
 	//ball.albedo = load_texture("assets/uvchecker.bmp");
 	//ball.albedo = new noise_texture(4);
@@ -376,33 +396,34 @@ void render_scene()
 
 	Workarea warea(0, 0, w, h, 0, 0);
 
-	//Image image(w * 12, h * 4);
+	Image image(w * 12, h * 4);
 	//Image image(w*12, h*1);
-	Image image(w * 5, h * 7);
+	//Image image(w * 5, h * 7);
+	//image.setFilterGamma(false);
 
 	unsigned int t, time;
 	start_timer(&t);
 
-	float metallic = 0.0f;
-	float roughness = 1.0f;
+	float metallic = 1.0f;
+	float roughness = 0.0f;
 	//render(&img, &scene, &warea, metallic, roughness, kOutputD, 0);
 	//render(&img, &scene, &warea, metallic, roughness, kOutputG, 1);
 	//render(&img, &scene, &warea, metallic, roughness, kOutputF, 2);
 	//render(&img, &scene, &warea, metallic, roughness, kOutputDiffuse, 3);
 	//render(&img, &scene, &warea, metallic, roughness, kOutputSpecular, 4);
 
-	render(image, scene, warea, metallic, roughness, kOutputDiffuse, 0);
-	render(image, scene, warea, metallic, roughness, kOutputDiffuseBurley, 1);
-	render(image, scene, warea, metallic, roughness, kOutputDiffuseRenormalizedBurley, 2);
-	render(image, scene, warea, metallic, roughness, kOutputDiffuseOrenNayar, 3);
-	render(image, scene, warea, metallic, roughness, kOutputDiffuseQualitativeOrenNayar, 4);
-	render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedOrenNayar, 5);
-	render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedFastOrenNayar, 6);
+	//render(image, scene, warea, metallic, roughness, kOutputDiffuse, 0);
+	//render(image, scene, warea, metallic, roughness, kOutputDiffuseBurley, 1);
+	//render(image, scene, warea, metallic, roughness, kOutputDiffuseRenormalizedBurley, 2);
+	//render(image, scene, warea, metallic, roughness, kOutputDiffuseOrenNayar, 3);
+	//render(image, scene, warea, metallic, roughness, kOutputDiffuseQualitativeOrenNayar, 4);
+	//render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedOrenNayar, 5);
+	//render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedFastOrenNayar, 6);
 
-	//render(image, scene, warea, metallic, roughness, kOutputIndirectSpecularIBL, 0);
-	//render(image, scene, warea, metallic, roughness, kOutputIndirectApproximateSpecularIBL, 1);
-	//render(image, scene, warea, metallic, roughness, kOutputSpecular, 2);
-	//render(image, scene, warea, metallic, roughness, kOutputDefault, 3);
+	render(image, scene, warea, metallic, roughness, kOutputIndirectSpecularIBL, 0);
+	render(image, scene, warea, metallic, roughness, kOutputIndirectApproximateSpecularIBL, 1);
+	render(image, scene, warea, metallic, roughness, kOutputSpecular, 2);
+	render(image, scene, warea, metallic, roughness, kOutputDefault, 3);
 
 	//render(image, scene, warea, metallic, roughness, kOutputAlbedo, 0);
 	//render(image, scene, warea, metallic, roughness, kOutputRoughness, 1);
@@ -417,6 +438,9 @@ void render_scene()
 	stbi_write_bmp(OUTPUT, image.width(), image.height(), sizeof(Image::rgb), image.pixels());
 }
 
+#include "scene.h"
+#include "shade.h"
+#define MAX_DEPTH 50
 void raytrace()
 {
 
@@ -427,10 +451,10 @@ void raytrace()
 	//int ny = 800;
 	int nx = 500;
 	int ny = 500;
-	int ns = 100;
+	int ns = 300;
 
 	std::unique_ptr<Image> image(new Image(nx,ny));
-	image->setFilterGamma(false);
+	//image->setFilterGamma(false);
 	//std::unique_ptr<Image::rgb[]> image(new Image::rgb[nx*ny]);
 
 	//hitable* list[5];
@@ -457,19 +481,19 @@ void raytrace()
 	//hitable* world = two_perlin_spheres();
 	//hitable* world = earth();
 	//hitable* world = simple_light();
-	hitable* world = cornel_box();
+	//hitable* world = cornel_box();
 	//hitable* world = cornel_smoke();
 	//hitable* world = final_scene();
+	hitable* world = refract_sphere();
 
-	hitable* list[2];
-	list[0] = new xz_rect(213, 343, 227, 332, 554, 0);
-	list[1] = new sphere(vec3(190, 90, 190), 90, 0);
+	//hitable* list[2];
+	//list[0] = new xz_rect(213, 343, 227, 332, 554, 0);
+	//list[1] = new sphere(vec3(190, 90, 190), 90, 0);
 	//hitable* lights = new hitable_list(list, 2);
-	//list[0] = new sphere(vec3(190, 90, 190), 90, 0);
-	hitable* lights = new hitable_list(list, 2);
+	hitable* lights = nullptr;
 
 	//vec3 lookfrom = vec3(3,3,2);
-	//vec3 lookat = vec3(0,0,-1);
+	//vec3 lookat = vec3(0,0,0);
 	//vec3 lookfrom = vec3(13,2,3) * 2;
 	//vec3 lookat = vec3(0,0,0);
 	vec3 lookfrom = vec3(278, 278, -800);
@@ -489,11 +513,13 @@ void raytrace()
 			for (int s = 0; s<ns; ++s) {
 				float u = float(i + drand48()) / float(nx);
 				float v = float(j + drand48()) / float(ny);
-				col += shade(cam.get_ray(u, v), world, lights, 0);
+				col += shade(cam.get_ray(u, v), world, lights, 0, MAX_DEPTH);
+				//col += shade(cam.get_ray(u, v), world, lights, 0, 1);
 			}
 
 			col /= float(ns);
-			image->write(i, ny-j-1, sqrtPerElem(col));
+			//image->write(i, ny-j-1, sqrtPerElem(col));
+			image->write(i, ny - j - 1, col);
 		}
 	}
 
