@@ -47,6 +47,21 @@ vec3 diffuse_light::emitted(const ray& r, const hit_record& hrec, float u, float
 	}
 }
 
+class sky_light : public material {
+public:
+	sky_light() {}
+
+	virtual bool scatter(const ray& r, const hit_record& hrec, scatter_record& srec) const override {
+		return false;
+	}
+
+	virtual vec3 emitted(const ray& r, const hit_record& hrec, float u, float v, const vec3& p) const override {
+		vec3 n = normalize(r.direction());
+		float t = 0.5f * (n.getY() + 1.0f);
+		return (1.0f - t) * vec3(1.0f) + t*vec3(0.5f, 0.7f, 1.0f);
+	}
+};
+
 class isotropic : public material {
 public:
 	isotropic(texture* a) : m_albedo(a) {}
@@ -91,6 +106,18 @@ float lambertian::scattering_pdf(const ray& r, const hit_record& hrec, scatter_r
 	if (cosine < 0) cosine = 0;
 	return cosine / M_PI;
 }
+
+class emission : public lambertian {
+public:
+	emission(texture* a, texture* e) : lambertian(a), m_emit(e) {}
+
+	virtual vec3 emitted(const ray& r, const hit_record& hrec, float u, float v, const vec3& p) const override {
+		return m_emit->value(hrec.u, hrec.v, p);
+	}
+
+private:
+	texture* m_emit;
+};
 
 class metal : public material {
 public:
