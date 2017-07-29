@@ -3,27 +3,6 @@
 // BRDFs
 
 enum {
-	kOutputDefault,
-	kOutputD,
-	kOutputG,
-	kOutputF,
-	kOutputDiffuse,
-	kOutputDiffuseBurley,
-	kOutputDiffuseRenormalizedBurley,
-	kOutputDiffuseOrenNayar,
-	kOutputDiffuseQualitativeOrenNayar,
-	kOutputDiffuseImprovedOrenNayar,
-	kOutputDiffuseImprovedFastOrenNayar,
-	kOutputSpecular,
-	kOutputIndirectSpecular,
-	kOutputIndirectSpecularIBL,
-	kOutputIndirectApproximateSpecularIBL,
-	kOutputEnvmap,
-	kOutputAlbedo,
-	kOutputRoughness
-};
-
-enum {
 	kDiffuseLambert,
 	kDiffuseBurley,
 	kDiffuseRenormalizedBurley,
@@ -257,6 +236,7 @@ float D_GGX(float a, float dotNH)
 float G_Smith_Schlick_GGX(float a, float dotNV, float dotNL)
 {
 	float k = a*a*0.5 + EPSILON;
+	//float k = pow2(sqrtf(a)+1) / 8.0f;
 	float gl = dotNL / (dotNL * (1.0f - k) + k);
 	float gv = dotNV / (dotNV * (1.0f - k) + k);
 	return gl*gv;

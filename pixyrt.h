@@ -55,6 +55,7 @@ struct GeometricContext {
 	Vector3 position;
 	Vector3 normal;
 	Vector3 viewDir;
+	Vector2 uv0;
 };
 
 struct Material {
@@ -62,11 +63,18 @@ struct Material {
 	Vector3 specularColor;
 	float specularRoughness;
 	int diffuseMethod;
+	Vector3 albedo;
 };
 
 struct IncidentLight {
 	Vector3 color;
 	Vector3 direction;
+};
+
+struct Samplers {
+	texture* albedo;
+	texture* roughness;
+	cube_texture* envmap;
 };
 
 typedef struct _sphere {
@@ -137,6 +145,15 @@ public:
 	int width() const { return m_width; }
 	int height() const { return m_height; }
 	void* pixels() const { return m_pixels; }
+
+	void clear(const vec3& color)
+	{
+		for (int i=0; i<m_height; ++i) {
+			for (int j=0; j<m_width; ++j) {
+				write(j, i, color);
+			}
+		}
+	}
 
 	void write(int x, int y, const vec3& color)
 	{

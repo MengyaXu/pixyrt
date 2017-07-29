@@ -159,6 +159,11 @@
   <ItemGroup>
     <ClCompile Include="pixyrt.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="plot.h" />
+    <ClInclude Include="render.h" />
+    <ClInclude Include="trace.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
