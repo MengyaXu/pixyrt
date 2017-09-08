@@ -22,15 +22,19 @@ void plot_diffuse_reflectance()
 			Quat rotX = Quat::rotationX(-theta);
 			vec3 V = rotate(rotX, vec3::zAxis());
 			float roughness = float(j) / 20.0f;
+			roughness = sqrtf(1 / 4.0f);
+			diffuse = Vector3(0.8f);
+			float a = roughness * roughness;
 			//vec3 albedo = LambertDiffuse(diffuse) * PI;
-			//vec3 albedo = BurleyDiffuse(diffuse, roughness, N, V, L) * PI;
+			//vec3 albedo = BurleyDiffuse(diffuse, a, N, V, L) * PI;
 			//vec3 albedo = RenormalizedBurleyDiffuse(diffuse, roughness, N, V, L) * PI;
-			//vec3 albedo = OrenNayarDiffuse(diffuse, roughness, N, V, L) * PI;
-			//vec3 albedo = QualitativeOrenNayarDiffuse(diffuse, roughness, N, V, L) * PI;
-			//vec3 albedo = ImprovedOrenNayarDiffuse(diffuse, roughness, N, V, L) * PI;
-			vec3 albedo = ImprovedFastOrenNayarDiffuse(diffuse, roughness, N, V, L) * PI;
+			//vec3 albedo = OrenNayarDiffuse(diffuse, a, N, V, L) * PI;
+			//vec3 albedo = QualitativeOrenNayarDiffuse(diffuse, a, N, V, L) * PI;
+			vec3 albedo = ImprovedOrenNayarDiffuse(diffuse, a, N, V, L) * PI;
+			//vec3 albedo = ImprovedFastOrenNayarDiffuse(diffuse, a, N, V, L) * PI;
 			//ostrm << roughness << "," << i << "," << albedo.getX() << std::endl;
-			ostrm << roughness << "," << 90 - i << "," << albedo.getX() << std::endl;
+			//ostrm << roughness << "," << 90 - i << "," << albedo.getX() << std::endl;
+			ostrm << roughness << "," << 90 - i << "," << albedo.getX() << "," << V.getX() << "," << V.getY() << "," << V.getZ() << std::endl;
 		}
 	}
 }
@@ -53,6 +57,6 @@ void plot_random_cosine_direction()
 
 void plot()
 {
-	//plot_diffuse_reflectance();
-	plot_random_cosine_direction();
+	plot_diffuse_reflectance();
+	//plot_random_cosine_direction();
 }

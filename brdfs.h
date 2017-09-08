@@ -9,7 +9,10 @@ enum {
 	kDiffuseOrenNayar,
 	kDiffuseQualitativeOrenNayar,
 	kDiffuseImprovedOrenNayar,
-	kDiffuseImprovedFastOrenNayar
+	kDiffuseImprovedFastOrenNayar,
+	kDiffuseGotandaOrenNayar,
+	kDiffuseGotandaNormalizedOrenNayar,
+	kDiffuseGGXApprox,
 };
 
 Vector3 LambertDiffuse(const Vector3& diffuseColor)
@@ -194,6 +197,94 @@ Vector3 ImprovedFastOrenNayarDiffuse(const Vector3& diffuseColor, float a, const
 	float B = a * A;
 	return diffuseColor * (A + B * st);
 }
+// GOTANDA
+// http://brabl.com/diffuse-approximation-for-consoles/
+Vector3 GotandaOrenNayarDiffuse(const Vector3& diffuseColor, float roughness, const Vector3& N, const Vector3& V, const Vector3& L)
+{
+	// calculate intermediary values
+	float f0 = 0.04f;
+	float dotNL = saturate(dot(N, L));
+	float dotNV = saturate(dot(N, V));
+	float dotLV = saturate(dot(L, V));
+	Vector3 H = normalize(L + V);
+	float dotVH = saturate(dot(V, H));
+	float a = roughness*roughness;
+	float a2 = a*a;
+
+	// float fTheta = f0 + (1.0 - f0) * pow(2.0, -9.60232*pow(VdotH, 8) - 8.58092 * VdotH);
+	float Fr1 = (1.0 - (0.542026*a2 + 0.303573*a) / (a2 + 1.36053));
+	float Fr2 = (1.0 - (pow(1.0 - dotNV, 5.0 - 4.0*a2)) / (a2 + 1.36053));
+	float Fr3 = (-0.733996*a2*a + 1.50912*a2 - 1.16402*a);
+	float Fr4 = (pow(1.0 - dotNV, 1.0 + (1.0 / (39.0*a2*a2 + 1.0))));
+	float Fr = Fr1*Fr2*(Fr3*Fr4 + 1);
+	float Lm1 = (max(1.0 - (2.0*a), 0.0)*(1.0 - pow(1.0 - dotNL, 5.0)) + min(2.0*a, 1.0));
+	float Lm2 = ((1.0 - 0.5*a)*dotNL + (0.5*a)*(pow(dotNL, 2.0)));
+	float Lm = Lm1 * Lm2;
+	float Vd1 = (a2 / ((a2 + 0.09)*(1.31072 + 0.995584*dotNV)));
+	float Vd2 = (1.0 - (pow(1.0 - dotNL, (1.0 - 0.3726732*(dotNV*dotNV)) / (0.188566 + 0.38841*dotNV))));
+	float Vd = Vd1*Vd2;
+	float Bp = dotLV - (dotNV*dotNL);
+	if (Bp < 0.0) Bp *= 1.4*dotNL*dotNL;
+	float L1 = 1.05f*(1.0 - f0)*(Fr*Lm + Vd*Bp);
+	return diffuseColor * (L1*RECIPROCAL_PI);
+
+	//float fTheta = f0 + (1.0f - f0) * powf(2.0f, -9.60232*powf(dotVH, 8.0f) - 8.58092 * dotVH);
+	//float Bp = 0.0f;
+	//float Bpl = dotLV - (dotNV*dotNL);
+	//float Fr = (1.0f - (0.542026f*a + 0.303573f*roughness)/(a+1.36053f)) *
+	//	(1.0f - (powf(1.0f-dotNV, 5.0f-4.0f*a))/(a+1.36053f)) *
+	//	((-0.733996f*a*roughness+1.50912f*a-1.16402f*roughness)*
+	//	(powf(1.0f-dotNV, 1.0f+(1.0f/(39.0f*a*a+1.0f))))+1.0f);
+	//float Lm = (max(1.0f-(2.0f*roughness),0.0f)*(1.0f-(1.0f-pow(dotNL,5.0f)))+min(2.0f*roughness,1.0f))*((1.0f-0.5f*a)*dotNL+(0.5*a)*(powf(dotNL,2.0f)));
+	//float Vd = (a/((a+0.09f)*(1.31072f+0.995584f*dotNV)))*(1.0f-(powf(1.0f-dotNL,(1.0f-0.3726732*(dotNV*dotNV))/(0.188566f+0.38841*dotNV))));
+	//if (Bpl < 0.0f)
+	//	Bp = 1.4f*dotNV*dotNL*(dotLV-(dotNV*dotNL));
+	//else 
+	//	Bp = dotLV-((dotNV*dotNL));
+	//float aDiffuse = (21.0f/(20.0f*PI))*(1.0f-f0)*((Fr*Lm)+(Vd*Bp));
+	//return diffuseColor * aDiffuse;
+}
+// GOTANDA
+// http://brabl.com/diffuse-approximation-for-consoles/
+Vector3 GotandaNormalizedOrenNayarDiffuse(const Vector3& diffuseColor, float roughness, const Vector3& N, const Vector3& V, const Vector3& L)
+{
+	float f0 = 0.04f;
+	float dotNL = saturate(dot(N, L));
+	float dotNV = saturate(dot(N, V));
+	float dotLV = saturate(dot(L, V));
+	Vector3 H = normalize(L + V);
+	float dotVH = saturate(dot(V, H));
+	float a = roughness*roughness;
+
+	//float fTheta = f0 + (1.0f - f0) * powf(2.0f, -9.60232*powf(dotVH, 8.0f) - 8.58092 * dotVH);
+
+	float fdiff = 1.05f * (1.0f - f0) * (1.0f - powf(1.0f - dotNL, 5.0f)) * (1.0f - powf(1.0f - dotNV, 5.0f));
+	float A = 1.0f - 0.5f * (a / (a + 0.65f));
+	float B = 0.45f * (a / (a + 0.09f));
+	float Bp = dotLV - dotNV*dotNL;
+	float Bm = min(1.0f, dotNL / (dotNV + EPSILON));
+	float L1 = (1.0f - f0) * (fdiff*dotNL*A + B*Bp*Bm);
+	return diffuseColor * (L1 * RECIPROCAL_PI);
+}
+
+// GGX Approximation
+Vector3 GGXApproxDiffuse(const Vector3& diffuseColor, float roughness, const Vector3& N, const Vector3& V, const Vector3& L)
+{
+	float dotNL = saturate(dot(N, L));
+	float dotNV = saturate(dot(N, V));
+	float dotLV = saturate(dot(L, V));
+	Vector3 H = normalize(L + V);
+	float dotVH = saturate(dot(V, H));
+	float dotNH = saturate(dot(N, H));
+	float a = roughness*roughness;
+
+	float facing = 0.5f + 0.5f * dotLV;
+	float rough = facing * (0.9f - 0.4f*facing) * ((0.5f + dotNH)/dotNH);
+	float Smooth = 1.05f * (1.0f - powf(1.0f - dotNL, 5.0f)) * (1.0f - powf(1.0f-dotNL, 5.0f));
+	float single = mix(Smooth, rough, a) * RECIPROCAL_PI;
+	float multi = 0.1159f * a;
+	return mulPerElem(diffuseColor, vec3(single) + diffuseColor * multi);
+}
 
 Vector3 DiffuseBRDF(const IncidentLight& directLight, const GeometricContext& geometry, const Vector3& diffuseColor, float roughness, int method)
 {
@@ -215,6 +306,12 @@ Vector3 DiffuseBRDF(const IncidentLight& directLight, const GeometricContext& ge
 		return ImprovedOrenNayarDiffuse(diffuseColor, a, geometry.normal, geometry.viewDir, directLight.direction);
 	case kDiffuseImprovedFastOrenNayar:
 		return ImprovedFastOrenNayarDiffuse(diffuseColor, a, geometry.normal, geometry.viewDir, directLight.direction);
+	case kDiffuseGotandaOrenNayar:
+		return GotandaOrenNayarDiffuse(diffuseColor, roughness, geometry.normal, geometry.viewDir, directLight.direction);
+	case kDiffuseGotandaNormalizedOrenNayar:
+		return GotandaNormalizedOrenNayarDiffuse(diffuseColor, roughness, geometry.normal, geometry.viewDir, directLight.direction);
+	case kDiffuseGGXApprox:
+		return GGXApproxDiffuse(diffuseColor, roughness, geometry.normal, geometry.viewDir, directLight.direction);
 	}
 
 	return LambertDiffuse(diffuseColor);

@@ -25,6 +25,9 @@ enum {
 	kOutputDiffuseQualitativeOrenNayar,
 	kOutputDiffuseImprovedOrenNayar,
 	kOutputDiffuseImprovedFastOrenNayar,
+	kOutputDiffuseGotandaOrenNayar,
+	kOutputDiffuseGotandaNormalizedOrenNayar,
+	kOutputDiffuseGGXApprox,
 	kOutputSpecular,
 	kOutputIndirectSpecular,
 	kOutputIndirectSpecularIBL,
@@ -136,6 +139,30 @@ void RenderDiffuseImprovedFastOrenNayar(const IncidentLight& directLight, const 
 	reflectedLight.directSpecular = vec3(0);
 }
 
+void RenderDiffuseGotandaOrenNayar(const IncidentLight& directLight, const GeometricContext& geometry, const Material& material, const Samplers& samplers, ReflectedLight& reflectedLight)
+{
+	Material mat = material;
+	mat.diffuseMethod = kDiffuseGotandaOrenNayar;
+	RE_Direct(directLight, geometry, mat, reflectedLight);
+	reflectedLight.directSpecular = vec3(0);
+}
+
+void RenderDiffuseGotandaNormalizedOrenNayar(const IncidentLight& directLight, const GeometricContext& geometry, const Material& material, const Samplers& samplers, ReflectedLight& reflectedLight)
+{
+	Material mat = material;
+	mat.diffuseMethod = kDiffuseGotandaNormalizedOrenNayar;
+	RE_Direct(directLight, geometry, mat, reflectedLight);
+	reflectedLight.directSpecular = vec3(0);
+}
+
+void RenderDiffuseGGXApprox(const IncidentLight& directLight, const GeometricContext& geometry, const Material& material, const Samplers& samplers, ReflectedLight& reflectedLight)
+{
+	Material mat = material;
+	mat.diffuseMethod = kDiffuseGGXApprox;
+	RE_Direct(directLight, geometry, mat, reflectedLight);
+	reflectedLight.directSpecular = vec3(0);
+}
+
 void RenderSpecular(const IncidentLight& directLight, const GeometricContext& geometry, const Material& material, const Samplers& samplers, ReflectedLight& reflectedLight)
 {
 	RE_Direct(directLight, geometry, material, reflectedLight);
@@ -198,6 +225,9 @@ RenderFunction renderFunctions[] = {
 	RenderDiffuseQualitativeOrenNayar,
 	RenderDiffuseImprovedOrenNayar,
 	RenderDiffuseImprovedFastOrenNayar,
+	RenderDiffuseGotandaOrenNayar,
+	RenderDiffuseGotandaNormalizedOrenNayar,
+	RenderDiffuseGGXApprox,
 	RenderSpecular,
 	RenderIndirectSpecular,
 	RenderIndirectSpecularIBL,
@@ -303,14 +333,13 @@ void render(Image& image, Scene& scene, Workarea& warea, float metallic, float r
 				image.write(warea.outx() + x, warea.outy() + y, color);
 			}
 			else {
-				//draw_pixel(&img->buf[index], scene->bgcolor);
-				//image.write(warea.outx() + x, warea.outy() + y, scene.getBgColor());
+				image.write(warea.outx() + x, warea.outy() + y, scene.getBgColor());
 
 				// sky light
-				vec3 n = normalize(r.direction());
-				float t = 0.5f * (n.getY() + 1.0f);
-				vec3 color = (1.0f - t) * vec3(1.0f) + t*vec3(0.5f, 0.7f, 1.0f);
-				image.write(warea.outx() + x, warea.outy() + y, color);
+				//vec3 n = normalize(r.direction());
+				//float t = 0.5f * (n.getY() + 1.0f);
+				//vec3 color = (1.0f - t) * vec3(1.0f) + t*vec3(0.5f, 0.7f, 1.0f);
+				//image.write(warea.outx() + x, warea.outy() + y, color);
 			}
 		}
 	}
@@ -319,8 +348,8 @@ void render(Image& image, Scene& scene, Workarea& warea, float metallic, float r
 void render(Image& image, Scene& scene, Workarea& warea, float metallic, float roughness, int type, int row)
 {
 #pragma omp parallel for schedule(dynamic, 1) num_threads(THREAD_NUM)
-	for (int i = 0; i <= 11; i++) {
-		//for (int i = 0; i < 5; i++) {
+	//for (int i = 0; i <= 11; i++) {
+		for (int i = 0; i < 5; i++) {
 		float theta = radians(45);
 		float phi = radians(i*30);
 		//float phi = radians(i * 30);
@@ -385,20 +414,20 @@ void render_scene()
 
 	Workarea warea(0, 0, w, h, 0, 0);
 
-	Image image(w * 12, h * 1);
+	//Image image(w * 12, h * 1);
 	//Image image(w*12, h*1);
-	//Image image(w * 5, h * 7);
+	Image image(w * 5, h * 10);
 	//image.setFilterGamma(false);
 	//image.clear(vec3(1.0f));
 
 	unsigned int t, time;
 	start_timer(&t);
 
-	float metallic = 0.5f;
-	float roughness = 0.5f;
+	float metallic = 0.0f;
+	float roughness = 0.0f;
 	//render(image, scene, warea, metallic, roughness, kOutputD, 0);
 	//render(image, scene, warea, metallic, roughness, kOutputG, 0);
-	render(image, scene, warea, metallic, roughness, kOutputF, 0);
+	//render(image, scene, warea, metallic, roughness, kOutputF, 0);
 
 	//render(image, scene, warea, metallic, roughness, kOutputD, 0);
 	//render(image, scene, warea, metallic, roughness, kOutputG, 1);
@@ -407,13 +436,16 @@ void render_scene()
 	//render(image, scene, warea, metallic, roughness, kOutputSpecular, 4);
 	//render(image, scene, warea, metallic, roughness, kOutputDefault, 5);
 
-	//render(image, scene, warea, metallic, roughness, kOutputDiffuse, 0);
-	//render(image, scene, warea, metallic, roughness, kOutputDiffuseBurley, 1);
-	//render(image, scene, warea, metallic, roughness, kOutputDiffuseRenormalizedBurley, 2);
-	//render(image, scene, warea, metallic, roughness, kOutputDiffuseOrenNayar, 3);
-	//render(image, scene, warea, metallic, roughness, kOutputDiffuseQualitativeOrenNayar, 4);
-	//render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedOrenNayar, 5);
-	//render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedFastOrenNayar, 6);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuse, 0);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseBurley, 1);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseRenormalizedBurley, 2);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseOrenNayar, 3);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseQualitativeOrenNayar, 4);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedOrenNayar, 5);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseImprovedFastOrenNayar, 6);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseGotandaOrenNayar, 7);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseGotandaNormalizedOrenNayar, 8);
+	render(image, scene, warea, metallic, roughness, kOutputDiffuseGGXApprox, 9);
 
 	//render(image, scene, warea, metallic, roughness, kOutputIndirectSpecularIBL, 0);
 	//render(image, scene, warea, metallic, roughness, kOutputIndirectApproximateSpecularIBL, 1);
